@@ -1,4 +1,4 @@
-package net_device
+package raw_device
 
 import (
 	"log"
