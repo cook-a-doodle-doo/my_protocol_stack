@@ -4,7 +4,6 @@ package raw_device
 //Tx: Transmiter X
 
 type RawDevice interface {
-	Open() error
 	Close() error
 	Rx(func() (int, int, int)) error
 	Tx([]byte) (int, error)
