@@ -3,6 +3,7 @@ package raw_device
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"syscall"
@@ -10,14 +11,12 @@ import (
 )
 
 const (
-	cIFF_TUN   = 0x0001
-	cIFF_TAP   = 0x0002
-	cIFF_NO_PI = 0x1000
+	CLONE_DEVICE = "/dev/net/tun"
 )
 
 type TapLinux struct {
+	io.ReadWriteCloser
 	name string
-	file *os.File
 }
 
 type ttIF struct {
@@ -27,13 +26,13 @@ type ttIF struct {
 }
 
 func NewTapLinux(name string) (*TapLinux, error) {
-	f, err := os.OpenFile("/dev/net/tun", os.O_RDWR, 0)
+	f, err := os.OpenFile(CLONE_DEVICE, os.O_RDWR, 0600)
 	if err != nil {
 		return nil, err
 	}
 	var req ttIF
 	copy(req.Name[:], name)
-	req.Flags = cIFF_NO_PI | cIFF_TAP
+	req.Flags = syscall.IFF_NO_PI | syscall.IFF_TAP
 
 	_, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
@@ -42,29 +41,22 @@ func NewTapLinux(name string) (*TapLinux, error) {
 		uintptr(unsafe.Pointer(&req)))
 	if errno != 0 {
 		var msg string
+		//TODO 適切なエラーメッセージ
 		switch errno {
 		case 1:
 			msg = fmt.Sprintf("ioctl: requires root privileges")
 		default:
 			msg = fmt.Sprintf("ioctl: %d", errno)
 		}
+		f.Close()
 		return nil, errors.New(msg)
 	}
 	n := strings.Trim(string(req.Name[:]), "\x00")
-	return &TapLinux{name: n, file: f}, nil
+	return &TapLinux{name: n, ReadWriteCloser: f}, nil
 }
 
-func (t *TapLinux) Close() error {
-	return t.file.Close()
-}
-
-func (t *TapLinux) Rx() {
-}
-
-func (t *TapLinux) Tx() {
-}
-
-func (t *TapLinux) Name() {
+func (t *TapLinux) Name() string {
+	return t.name
 }
 
 func (t *TapLinux) Addr() {

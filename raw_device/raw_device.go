@@ -1,12 +1,12 @@
 package raw_device
 
+import "io"
+
 //Rx: Receiver X
 //Tx: Transmiter X
 
 type RawDevice interface {
-	Close() error
-	Rx(func() (int, int, int)) error
-	Tx([]byte) (int, error)
+	io.ReadWriteCloser
 	Name() string
 	Addr() (int, error)
 }
