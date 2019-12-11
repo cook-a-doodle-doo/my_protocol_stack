@@ -10,3 +10,14 @@ type RawDevice interface {
 	Name() string
 	Addr() ([]byte, error)
 }
+
+const (
+	TAP = iota
+)
+
+func NewRawDevice(t Type) {
+	switch t {
+	case TAP:
+		NewTapLinux("tap%d")
+	}
+}
