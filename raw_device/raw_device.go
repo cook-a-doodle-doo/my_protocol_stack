@@ -8,5 +8,5 @@ import "io"
 type RawDevice interface {
 	io.ReadWriteCloser
 	Name() string
-	Addr() (int, error)
+	Addr() ([]byte, error)
 }

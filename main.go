@@ -16,12 +16,17 @@ func main() {
 	defer tap.Close()
 	buf := make([]byte, 1500)
 
+	s, err := tap.Addr()
+	if err != nil {
+		fmt.Println("can't get mac addr")
+	}
+	fmt.Printf("%x:%x:%x:%x:%x:%x\n", s[0], s[1], s[2], s[3], s[4], s[5])
 	fmt.Println("start tap0")
 	for i := 0; ; i++ {
 		//		bufio.NewScanner(os.Stdin).Scan()
 		//		time.Sleep(time.Second)
-		fmt.Println("\nupdate~~~~~~~~~~~~~~~~~~~~~~~~~~~~%d", i)
 		n, _ := tap.Read(buf)
+		fmt.Printf("\nupdate~~~~~~~~~~~~~~~~~~~~~~~~~~~~%d\n", i)
 		fmt.Println(hex.Dump(buf[:n]))
 	}
 }
