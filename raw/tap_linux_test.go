@@ -1,4 +1,4 @@
-package raw_device
+package raw
 
 import (
 	"testing"

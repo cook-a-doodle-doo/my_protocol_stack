@@ -1,4 +1,4 @@
-package data_link
+package layer2
 
 type DataLink interface {
 }

@@ -5,11 +5,16 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cook-a-doodle-do/my_protocol_stack/raw_device"
+	"github.com/cook-a-doodle-do/my_protocol_stack/raw"
 )
 
 func main() {
-	tap, err := raw_device.NewTapLinux("tap%d")
+	//	raw, err := raw_device.New(raw_device.TAP)
+	//	if err!= nil {
+	//		return
+	//	}
+
+	tap, err := raw.New(raw.TAP)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -29,4 +34,10 @@ func main() {
 		fmt.Printf("\nupdate~~~~~~~~~~~~~~~~~~~~~~~~~~~~%d\n", i)
 		fmt.Println(hex.Dump(buf[:n]))
 	}
+	/*
+		err := data_link.ReadEthernet()
+		if err != nil {
+			return
+		}
+	*/
 }
