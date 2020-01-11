@@ -3,6 +3,7 @@ package ethernet
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/cook-a-doodle-do/my_protocol_stack/link"
@@ -104,6 +105,7 @@ func (d *Device) Write(buf []byte) (int, error) {
 }
 
 func (d *Device) RxHandler(flame []byte, f link.RxHandler) {
+	fmt.Println("<< ethernet flame ================= >>")
 	hdr, err := parseHeader(flame)
 	if err != nil {
 		return
@@ -114,24 +116,56 @@ func (d *Device) RxHandler(flame []byte, f link.RxHandler) {
 	)
 	//TODO 理解が怪しい
 	if dst != d.addr && dst != BroadcastAddr && (dst.Entity()[0]&0x01 != 0) {
-		fmt.Println("flame is destroyed! because address is not mine.\n")
+		dst := dst.Entity()
+		src := src.Entity()
+		fmt.Println("flame is destroyed! because address is not mine.")
+		fmt.Printf("dst: %x:%x:%x:%x:%x:%x\n", dst[0], dst[1], dst[2], dst[3], dst[4], dst[5])
+		fmt.Printf("src: %x:%x:%x:%x:%x:%x\n\n", src[0], src[1], src[2], src[3], src[4], src[5])
 		return
 	}
-	f(dst, src, hdr.EtherType.UpperProtocolType(), flame[HeaderSize:])
+	fmt.Println(hex.Dump(flame[HeaderSize:]))
+	f(d, dst, src, hdr.EtherType.ProtocolType(), flame[HeaderSize:])
 }
 
-func (e EtherType) UpperProtocolType() link.UpperProtocolType {
+func (d *Device) Send(t link.ProtocolType, hrd link.HardwareAddr, buf []byte) error {
+	h := header{
+		EtherType: ProtocolType2EtherType(t),
+	}
+	copy(h.Destination[:], hrd.Entity())
+	copy(h.Source[:], d.Addr().Entity())
+	//	Destination MacAddr
+	//	Source      MacAddr
+	//	EtherType   EtherType
+	return nil
+}
+
+func ProtocolType2EtherType(p link.ProtocolType) EtherType {
+	switch p {
+	case link.ProtocolType_IPv4:
+		return 0x0800
+	case link.ProtocolType_ARP:
+		return 0x0806
+	case link.ProtocolType_RARP:
+		return 0x8635
+	case link.ProtocolType_IPv6:
+		return 0x86dd
+	default:
+		return 0x0000 //link.ProtocolType_UnDef
+	}
+}
+
+func (e EtherType) ProtocolType() link.ProtocolType {
 	switch e {
 	case 0x0800:
-		return link.UpperProtocolType_IPv4
+		return link.ProtocolType_IPv4
 	case 0x0806:
-		return link.UpperProtocolType_ARP
+		return link.ProtocolType_ARP
 	case 0x8635:
-		return link.UpperProtocolType_RARP
+		return link.ProtocolType_RARP
 	case 0x86dd:
-		return link.UpperProtocolType_IPv6
+		return link.ProtocolType_IPv6
 	default:
-		return link.UpperProtocolType_UnDef
+		return link.ProtocolType_UnDef
 	}
 }
 

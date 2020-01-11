@@ -2,7 +2,6 @@
 package link
 
 import (
-	"encoding/hex"
 	"fmt"
 	"io"
 )
@@ -28,25 +27,28 @@ type Device interface {
 	MTU() uint                   //Maximum Transmission Unit
 	HeaderSize() uint
 	RxHandler([]byte, RxHandler)
+	Send(ProtocolType, HardwareAddr, []byte) error
 	io.ReadWriteCloser
-	/*
-		Read([]byte) (int, error)
-		Write([]byte) (int, error)
-		Close() error
-	*/
 }
 
 //リンク層の全デバイスがここに入る============================================
 var (
-	devices        map[string]Device          = make(map[string]Device)
-	upperProtocols map[string][]UpperProtocol = make(map[string][]UpperProtocol)
+	devices        map[string]Device                = make(map[string]Device)
+	upperProtocols map[ProtocolType]ProtocolHandler = make(map[ProtocolType]ProtocolHandler)
 )
+
+func HaveHardware(d HardwareType) bool {
+	return true
+}
+
+func HaveProtocol(p ProtocolType) bool {
+	_, ok := upperProtocols[p]
+	return ok
+}
 
 //登録した瞬間に動き始める====================================================
 //インターフェイスがないので細かい設定は出来ない
 func RegistDevice(d Device) error {
-	//rxloop
-	fmt.Println(d.Name())
 	go func() {
 		for {
 			buf := make([]byte, d.MTU()+d.HeaderSize())
@@ -54,66 +56,56 @@ func RegistDevice(d Device) error {
 			if err != nil {
 				panic(err)
 			}
-			fmt.Println("<< ethernet flame ================= >>")
-			fmt.Println(hex.Dump(buf[:n]))
-			if err != nil {
-				panic(err)
-			}
-			d.RxHandler(buf, rxHandler)
+			d.RxHandler(buf[:n], rxHandler)
 		}
 	}()
 	return nil
 }
 
-type RxHandler func(HardwareAddr, HardwareAddr, UpperProtocolType, []byte)
+type RxHandler func(Device, HardwareAddr, HardwareAddr, ProtocolType, []byte)
 
-func rxHandler(dst, src HardwareAddr, upt UpperProtocolType, payload []byte) {
+func rxHandler(dev Device, dst, src HardwareAddr, upt ProtocolType, payload []byte) {
 	s := src.Entity()
 	d := dst.Entity()
 	fmt.Printf("src: %x:%x:%x:%x:%x:%x\n", s[0], s[1], s[2], s[3], s[4], s[5])
 	fmt.Printf("dst: %x:%x:%x:%x:%x:%x\n", d[0], d[1], d[2], d[3], d[4], d[5])
-	fmt.Printf("type:%s\n", upt.Name())
-	for key, protocols := range upperProtocols {
-		for _, protocol := range protocols {
-			protocol.RxHandler(devices[key], payload)
-		}
+	fmt.Printf("type:%s\n\n", upt.Name())
+	rx, ok := upperProtocols[upt]
+	if !ok {
+		fmt.Println("protocol", upt.Name(), "is not implmented!")
 	}
+	rx(dev, payload)
 }
 
 func Devices() map[string]Device {
 	return devices
 }
 
-func RegistUpperProtocol(d Device, up UpperProtocol) {
-	upperProtocols[d.Name()] = append(upperProtocols[d.Name()], up)
-	up.RegistLinkDevice(d)
+func RegistProtocol(upt ProtocolType, up ProtocolHandler) {
+	upperProtocols[upt] = up
 }
 
-type UpperProtocol interface {
-	RegistLinkDevice(Device)
-	RxHandler(Device, []byte)
-	Type() UpperProtocolType
-}
+type ProtocolHandler func(Device, []byte)
 
-type UpperProtocolType uint
+type ProtocolType uint
 
 const (
-	UpperProtocolType_IPv4  = iota
-	UpperProtocolType_IPv6  = iota
-	UpperProtocolType_ARP   = iota
-	UpperProtocolType_RARP  = iota
-	UpperProtocolType_UnDef = iota
+	ProtocolType_IPv4  = iota
+	ProtocolType_IPv6  = iota
+	ProtocolType_ARP   = iota
+	ProtocolType_RARP  = iota
+	ProtocolType_UnDef = iota
 )
 
-func (u UpperProtocolType) Name() string {
-	switch u {
-	case UpperProtocolType_IPv4:
+func (p ProtocolType) Name() string {
+	switch p {
+	case ProtocolType_IPv4:
 		return "IPv4"
-	case UpperProtocolType_IPv6:
+	case ProtocolType_IPv6:
 		return "IPv6"
-	case UpperProtocolType_ARP:
+	case ProtocolType_ARP:
 		return "ARP"
-	case UpperProtocolType_RARP:
+	case ProtocolType_RARP:
 		return "RARP"
 	}
 	return "UnDef"
@@ -122,38 +114,38 @@ func (u UpperProtocolType) Name() string {
 //============================================================================
 /*ネットワークインターフェイス(デバイスをどう扱うか)
 type NetIF struct {
-	ups    []*UpperProtocol
+	ups    []*Protocol
 	device *Device
 }
 */
 
 /*
-func (u UpperProtocolType) EtherType() string {
+func (u ProtocolType) EtherType() string {
 	switch u {
-	case UpperProtocolType_IPv4:
+	case ProtocolType_IPv4:
 		return 0x0800
-	case UpperProtocolType_IPv6:
+	case ProtocolType_IPv6:
 		return 0x86dd
-	case UpperProtocolType_ARP:
+	case ProtocolType_ARP:
 		return 0x0806
-	case UpperProtocolType_RARP:
+	case ProtocolType_RARP:
 		return 0x8635
 	default:
 		return 0x0000
 	}
 }
 
-func (u UpperProtocolType) EtherType() [6]byte {
+func (u ProtocolType) EtherType() [6]byte {
 	switch u {
-	case UpperProtocolType_ICMP:
+	case ProtocolType_ICMP:
 		return "ICMP"
-	case UpperProtocolType_IPv4:
+	case ProtocolType_IPv4:
 		return "IPv4"
-	case UpperProtocolType_IPv6:
+	case ProtocolType_IPv6:
 		return "IPv6"
-	case UpperProtocolType_ARP:
+	case ProtocolType_ARP:
 		return "ARP"
-	case UpperProtocolType_RARP:
+	case ProtocolType_RARP:
 		return "RAPR"
 	default:
 		return "undefined"
