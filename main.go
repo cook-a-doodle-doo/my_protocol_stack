@@ -1,18 +1,45 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
+	"github.com/cook-a-doodle-do/my_protocol_stack/enums"
 	"github.com/cook-a-doodle-do/my_protocol_stack/link"
-	_ "github.com/cook-a-doodle-do/my_protocol_stack/link/ethernet"
-	"github.com/cook-a-doodle-do/my_protocol_stack/network/arp"
+	"github.com/cook-a-doodle-do/my_protocol_stack/link/arp"
+	"github.com/cook-a-doodle-do/my_protocol_stack/link/ethernet"
+	"github.com/cook-a-doodle-do/my_protocol_stack/network"
+	"github.com/cook-a-doodle-do/my_protocol_stack/network/ipv4"
 )
 
 func main() {
-	fmt.Println(link.Devices())
-	link.RegistProtocol(link.ProtocolType_ARP, arp.RxHandler)
-	time.Sleep(2 * time.Minute)
+	//ethernetデヴァイスを作る
+	linkdev, err := ethernet.NewDevice()
+	if err != nil {
+		panic(err)
+	}
+	//ethernetデヴァイスをlink層のデヴァイスとして登録する
+	if err := link.RegistDevice(linkdev); err != nil {
+		panic(err)
+	}
+
+	//リンク層にARPを登録
+	link.RegistProtocol(enums.EtherTypeARP, arp.RxHandler)
+	//ネットワーク層にIPv4を登録
+	network.RegistProtocol(enums.EtherTypeIPv4, ipv4.CallbackHandler)
+
+	//IPインターフェイスを作製，アドレス追加
+	ipv4IF := ipv4.NewInterface()
+	ipv4IF.SetIPAddr([]byte{10, 0, 0, 2})
+	ipv4IF.SetNetMask([]byte{255, 255, 255, 255})
+
+	//network層のデヴァイスを作る
+	netdev, err := network.NewDevice(linkdev)
+	if err != nil {
+		panic(err)
+	}
+	netdev.AppendInterface(ipv4IF)
+
+	time.Sleep(3 * time.Minute)
 }
 
 //	raw, err := raw_device.New(raw_device.TAP)

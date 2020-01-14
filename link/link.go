@@ -4,6 +4,8 @@ package link
 import (
 	"fmt"
 	"io"
+
+	"github.com/cook-a-doodle-do/my_protocol_stack/enums"
 )
 
 type HardwareAddr interface {
@@ -27,21 +29,21 @@ type Device interface {
 	MTU() uint                   //Maximum Transmission Unit
 	HeaderSize() uint
 	RxHandler([]byte, RxHandler)
-	Send(ProtocolType, HardwareAddr, []byte) error
+	Send(enums.EtherType, HardwareAddr, []byte) error
 	io.ReadWriteCloser
 }
 
 //リンク層の全デバイスがここに入る============================================
 var (
-	devices        map[string]Device                = make(map[string]Device)
-	upperProtocols map[ProtocolType]ProtocolHandler = make(map[ProtocolType]ProtocolHandler)
+	devices        map[string]Device                   = make(map[string]Device)
+	upperProtocols map[enums.EtherType]ProtocolHandler = make(map[enums.EtherType]ProtocolHandler)
 )
 
 func HaveHardware(d HardwareType) bool {
 	return true
 }
 
-func HaveProtocol(p ProtocolType) bool {
+func HaveProtocol(p enums.EtherType) bool {
 	_, ok := upperProtocols[p]
 	return ok
 }
@@ -62,9 +64,9 @@ func RegistDevice(d Device) error {
 	return nil
 }
 
-type RxHandler func(Device, HardwareAddr, HardwareAddr, ProtocolType, []byte)
+type RxHandler func(Device, HardwareAddr, HardwareAddr, enums.EtherType, []byte)
 
-func rxHandler(dev Device, dst, src HardwareAddr, upt ProtocolType, payload []byte) {
+func rxHandler(dev Device, dst, src HardwareAddr, upt enums.EtherType, payload []byte) {
 	s := src.Entity()
 	d := dst.Entity()
 	fmt.Printf("src: %x:%x:%x:%x:%x:%x\n", s[0], s[1], s[2], s[3], s[4], s[5])
@@ -74,82 +76,16 @@ func rxHandler(dev Device, dst, src HardwareAddr, upt ProtocolType, payload []by
 	if !ok {
 		fmt.Println("protocol", upt.Name(), "is not implmented!")
 	}
-	rx(dev, payload)
+	rx(dev, payload, dst, src)
 }
 
 func Devices() map[string]Device {
 	return devices
 }
 
-func RegistProtocol(upt ProtocolType, up ProtocolHandler) {
+func RegistProtocol(upt enums.EtherType, up ProtocolHandler) {
 	upperProtocols[upt] = up
 }
 
-type ProtocolHandler func(Device, []byte)
-
-type ProtocolType uint
-
-const (
-	ProtocolType_IPv4  = iota
-	ProtocolType_IPv6  = iota
-	ProtocolType_ARP   = iota
-	ProtocolType_RARP  = iota
-	ProtocolType_UnDef = iota
-)
-
-func (p ProtocolType) Name() string {
-	switch p {
-	case ProtocolType_IPv4:
-		return "IPv4"
-	case ProtocolType_IPv6:
-		return "IPv6"
-	case ProtocolType_ARP:
-		return "ARP"
-	case ProtocolType_RARP:
-		return "RARP"
-	}
-	return "UnDef"
-}
-
-//============================================================================
-/*ネットワークインターフェイス(デバイスをどう扱うか)
-type NetIF struct {
-	ups    []*Protocol
-	device *Device
-}
-*/
-
-/*
-func (u ProtocolType) EtherType() string {
-	switch u {
-	case ProtocolType_IPv4:
-		return 0x0800
-	case ProtocolType_IPv6:
-		return 0x86dd
-	case ProtocolType_ARP:
-		return 0x0806
-	case ProtocolType_RARP:
-		return 0x8635
-	default:
-		return 0x0000
-	}
-}
-
-func (u ProtocolType) EtherType() [6]byte {
-	switch u {
-	case ProtocolType_ICMP:
-		return "ICMP"
-	case ProtocolType_IPv4:
-		return "IPv4"
-	case ProtocolType_IPv6:
-		return "IPv6"
-	case ProtocolType_ARP:
-		return "ARP"
-	case ProtocolType_RARP:
-		return "RAPR"
-	default:
-		return "undefined"
-	}
-}
-
-*/
+//device, payload, dst, src
+type ProtocolHandler func(Device, []byte, HardwareAddr, HardwareAddr)

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/cook-a-doodle-do/my_protocol_stack/enums"
 	"github.com/cook-a-doodle-do/my_protocol_stack/link"
 	"github.com/cook-a-doodle-do/my_protocol_stack/raw"
 )
@@ -37,22 +38,10 @@ type Device struct {
 	addr MacAddr
 }
 
-type EtherType uint16
-
 type header struct {
 	Destination MacAddr
 	Source      MacAddr
-	EtherType   EtherType
-}
-
-func init() {
-	dev, err := NewDevice()
-	if err != nil {
-		panic(err)
-	}
-	if err := link.RegistDevice(dev); err != nil {
-		panic(err)
-	}
+	EtherType   enums.EtherType
 }
 
 func NewDevice() (*Device, error) {
@@ -124,12 +113,12 @@ func (d *Device) RxHandler(flame []byte, f link.RxHandler) {
 		return
 	}
 	fmt.Println(hex.Dump(flame[HeaderSize:]))
-	f(d, dst, src, hdr.EtherType.ProtocolType(), flame[HeaderSize:])
+	f(d, dst, src, hdr.EtherType, flame[HeaderSize:])
 }
 
-func (d *Device) Send(t link.ProtocolType, hrd link.HardwareAddr, buf []byte) error {
+func (d *Device) Send(et enums.EtherType, hrd link.HardwareAddr, buf []byte) error {
 	h := header{
-		EtherType: ProtocolType2EtherType(t),
+		EtherType: et,
 	}
 	copy(h.Destination[:], hrd.Entity())
 	copy(h.Source[:], d.Addr().Entity())
@@ -137,36 +126,6 @@ func (d *Device) Send(t link.ProtocolType, hrd link.HardwareAddr, buf []byte) er
 	//	Source      MacAddr
 	//	EtherType   EtherType
 	return nil
-}
-
-func ProtocolType2EtherType(p link.ProtocolType) EtherType {
-	switch p {
-	case link.ProtocolType_IPv4:
-		return 0x0800
-	case link.ProtocolType_ARP:
-		return 0x0806
-	case link.ProtocolType_RARP:
-		return 0x8635
-	case link.ProtocolType_IPv6:
-		return 0x86dd
-	default:
-		return 0x0000 //link.ProtocolType_UnDef
-	}
-}
-
-func (e EtherType) ProtocolType() link.ProtocolType {
-	switch e {
-	case 0x0800:
-		return link.ProtocolType_IPv4
-	case 0x0806:
-		return link.ProtocolType_ARP
-	case 0x8635:
-		return link.ProtocolType_RARP
-	case 0x86dd:
-		return link.ProtocolType_IPv6
-	default:
-		return link.ProtocolType_UnDef
-	}
 }
 
 func (d *Device) Close() error {

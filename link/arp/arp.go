@@ -87,7 +87,7 @@ func parseParams(payload []byte, hlen, plen uint8) (*params, error) {
 	return &p, nil
 }
 
-func RxHandler(dev link.Device, buf []byte) {
+func RxHandler(dev link.Device, buf []byte, src, dst link.HardwareAddr) {
 	fmt.Println("<< arp ================= >>")
 	fmt.Println(hex.Dump(buf[HeaderSize:]))
 	hdr, err := parseHeader(buf)
