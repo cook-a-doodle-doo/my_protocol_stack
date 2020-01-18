@@ -1,9 +1,18 @@
 package enums
 
-type Hardwaretype uint16
+type HardwareType uint16
 
 const (
-	HardwaretypeEthernet Hardwaretype = 1
-
-//	HardwaretypeLoopBack Hardwaretype = 1
+	HardwareTypeEthernet HardwareType = 1
+	HardwareTypeLoopback HardwareType = 2
 )
+
+func (h HardwareType) Name() string {
+	switch h {
+	case HardwareTypeEthernet:
+		return "ethernet"
+	case HardwareTypeLoopback:
+		return "loopback"
+	}
+	return "undifined"
+}

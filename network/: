@@ -1,0 +1,57 @@
+package ipv4
+
+import (
+	"bytes"
+	"encoding/binary"
+	"fmt"
+
+	"github.com/cook-a-doodle-do/my_protocol_stack/network"
+)
+
+type header struct {
+	VersionAndHeaderLength uint8
+	ServiceType            uint8
+	TotalLength            uint16
+	Identification         uint16
+	FlagsAndFragmentOffset uint16
+	TimeToLive             uint8
+	ProtocolNum            uint8
+	HeaderChecksum         uint16
+	SourceIPAddr           uint32
+	DestinationIPAddr      uint32
+}
+
+func (h *header) Version() uint {
+	return uint(h.VersionAndHeaderLength)
+}
+
+func (h *header) HeaderLength() uint {
+	return uint(h.VersionAndHeaderLength)
+}
+
+func (h *header) Flags() {
+}
+
+func (h *header) FlagmentOffset() {
+}
+
+//ProtocolRxHandler
+func CallbackHandler(d *network.Device, payload []byte) {
+	fmt.Println("<< ipv4 rx ===================== >>")
+	hdr, err := parseHeader(payload)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	fmt.Println(hdr)
+	fmt.Println("<< ipv4 tx ===================== >>")
+}
+
+func parseHeader(buf []byte) (*header, error) {
+	var hdr header
+	reader := bytes.NewReader(buf)
+	if err := binary.Read(reader, binary.BigEndian, &hdr); err != nil {
+		return nil, err
+	}
+	return &hdr, nil
+}

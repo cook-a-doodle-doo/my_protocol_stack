@@ -55,12 +55,12 @@ func NewDevice() (*Device, error) {
 	}
 	var d Device
 	d.raw = rd
-	copy(addr, d.addr[:])
+	copy(d.addr[:], addr)
 	return &d, nil
 }
 
-func (d *Device) Type() link.HardwareType {
-	return link.HardwareTypeEthernet
+func (d *Device) Type() enums.HardwareType {
+	return enums.HardwareTypeEthernet
 }
 
 func (d *Device) Name() string {
@@ -89,12 +89,15 @@ func (d *Device) Read(buf []byte) (int, error) {
 }
 
 func (d *Device) Write(buf []byte) (int, error) {
-	n, err := d.Write(buf)
+	fmt.Println("<< ethernet tx ================= >>")
+	fmt.Println(hex.Dump(buf))
+	n, err := d.raw.Write(buf)
 	return n, err
 }
 
 func (d *Device) RxHandler(flame []byte, f link.RxHandler) {
-	fmt.Println("<< ethernet flame ================= >>")
+	fmt.Println("<< ethernet rx ================= >>")
+	fmt.Println(hex.Dump(flame))
 	hdr, err := parseHeader(flame)
 	if err != nil {
 		return
@@ -112,7 +115,6 @@ func (d *Device) RxHandler(flame []byte, f link.RxHandler) {
 		fmt.Printf("src: %x:%x:%x:%x:%x:%x\n\n", src[0], src[1], src[2], src[3], src[4], src[5])
 		return
 	}
-	fmt.Println(hex.Dump(flame[HeaderSize:]))
 	f(d, dst, src, hdr.EtherType, flame[HeaderSize:])
 }
 
@@ -120,11 +122,24 @@ func (d *Device) Send(et enums.EtherType, hrd link.HardwareAddr, buf []byte) err
 	h := header{
 		EtherType: et,
 	}
+	//TODO 送信サイズのチェック
 	copy(h.Destination[:], hrd.Entity())
 	copy(h.Source[:], d.Addr().Entity())
-	//	Destination MacAddr
-	//	Source      MacAddr
-	//	EtherType   EtherType
+
+	b := new(bytes.Buffer)
+	err := binary.Write(b, binary.BigEndian, h)
+	if err != nil {
+		return err
+	}
+	_, err = b.Write(buf)
+	if err != nil {
+		return err
+	}
+
+	_, err = d.Write(b.Bytes())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

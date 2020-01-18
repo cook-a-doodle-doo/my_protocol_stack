@@ -17,6 +17,7 @@ type Device struct {
 //リンクデバイスに紐付いているネットデバイスが欲しい
 var devices map[link.Device]*Device = make(map[link.Device]*Device)
 
+//リンクデバイスに1対1で紐づくネットワークデバイスを作製
 func NewDevice(link link.Device) (*Device, error) {
 	d, ok := devices[link]
 	if ok {
@@ -45,6 +46,23 @@ func (h HardwareAddr) Length() uint {
 //networkデバイスに論理インターフェイスを紐付ける
 func (d *Device) AppendInterface(i Interface) {
 	d.IFs[i.EtherType()] = append(d.IFs[i.EtherType()], i)
+	link.AppendInterface(
+		d.Device,
+		&LinkInterface{
+			netIF: i,
+		})
+}
+
+type LinkInterface struct {
+	netIF Interface
+}
+
+func (l *LinkInterface) ProtocolAddr() link.ProtocolAddr {
+	return l.netIF.ProtocolAddr()
+}
+
+func (l *LinkInterface) EtherType() enums.EtherType {
+	return l.netIF.EtherType()
 }
 
 const (
@@ -52,7 +70,7 @@ const (
 )
 
 //network層のデバイスを受け取る(同時にインターフェイスも)
-type ProtocolRxHandler func(*Device, []byte, HardwareAddr, HardwareAddr)
+type ProtocolRxHandler func(*Device, []byte)
 
 func RegistProtocol(et enums.EtherType, f ProtocolRxHandler) {
 	type packet struct {
@@ -63,9 +81,9 @@ func RegistProtocol(et enums.EtherType, f ProtocolRxHandler) {
 	}
 	rxQueue := make(chan packet, RxQueueSize)
 
+	//リンク層から呼び出しを受けたらキューに追加する
 	link.RegistProtocol(
 		et,
-		//リンク層から呼び出しを受けたらキューに追加する
 		func(link link.Device, payload []byte, dst, src link.HardwareAddr) {
 			rxQueue <- packet{
 				link:    link,
@@ -78,10 +96,7 @@ func RegistProtocol(et enums.EtherType, f ProtocolRxHandler) {
 	go func() {
 		for {
 			p := <-rxQueue
-			fmt.Println(p)
-			d := p.dst.Entity()
-			s := p.src.Entity()
-			f(devices[p.link], p.payload, d, s)
+			f(devices[p.link], p.payload)
 		}
 	}()
 }

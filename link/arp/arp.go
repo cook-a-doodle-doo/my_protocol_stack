@@ -8,16 +8,13 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/cook-a-doodle-do/my_protocol_stack/enums"
 	"github.com/cook-a-doodle-do/my_protocol_stack/link"
 )
 
 const (
-	Operation_REQUEST = 1
-	Operation_REPLAY  = 2
-)
-
-const (
-	Format_Ethernet = 1
+	OperationRequest = 1
+	OperationReplay  = 2
 )
 
 const (
@@ -27,14 +24,19 @@ const (
 type HardwareAddr []byte
 type ProtocolAddr []byte
 
+func (p ProtocolAddr) Entity() []byte {
+	return p
+}
+func (p ProtocolAddr) Length() uint {
+	return uint(len(p))
+}
+
 func (h HardwareAddr) Entity() []byte {
 	return h
 }
 func (h HardwareAddr) Length() uint {
 	return uint(len(h))
 }
-
-var arpTable map[*ProtocolAddr]*HardwareAddr = make(map[*ProtocolAddr]*HardwareAddr)
 
 type header struct {
 	HardwareAddrFormat uint16
@@ -88,8 +90,8 @@ func parseParams(payload []byte, hlen, plen uint8) (*params, error) {
 }
 
 func RxHandler(dev link.Device, buf []byte, src, dst link.HardwareAddr) {
-	fmt.Println("<< arp ================= >>")
-	fmt.Println(hex.Dump(buf[HeaderSize:]))
+	fmt.Println("<< arp rx ====================== >>")
+	fmt.Println(hex.Dump(buf))
 	hdr, err := parseHeader(buf)
 	if err != nil {
 		fmt.Println("invalid header!")
@@ -100,38 +102,129 @@ func RxHandler(dev link.Device, buf []byte, src, dst link.HardwareAddr) {
 		fmt.Println("invalid payload!")
 		return
 	}
-	fmt.Println(hdr.Operation)
-	fmt.Println(hdr.HardwareAddrFormat)
-	fmt.Println(hdr.ProtocolAddrFormat)
-	fmt.Println(p.SenderHA)
-	fmt.Println(p.SenderPA)
-	fmt.Println(p.TargetHA)
-	fmt.Println(p.TargetPA)
-	fmt.Println("hoge")
-	//指定のハードウェアを扱えない→終了
-	if !link.HaveHardware(link.HardwareType(hdr.HardwareAddrFormat)) {
-		return
-	}
-	//指定のプロトコルを扱えない→終了
-	//	t := ethernet.ProtocolType2EtherType(ethernet.EtherType(hdr.ProtocolAddrFormat))
-	//	if !link.HaveProtocol() {
-	//		return
-	//	}
-	//Marge_flag を false にする
-	//もし、プロトコルタイプと送信者プロトコルアドレスが既に ARP テーブ ルに含まれていたら、
-	//
-	//    そのエントリのハードウェアアドレスを新しいアドレスに更新し、
-	//    Marge_flag を true にする
-	//
-	//自分がターゲットプロトコルアドレスでない→終了
-	//もし、 Marge_flag が false なら、「プロトコル、送信者プロトコルア ドレス、送信者ハードウェアアドレス」を ARP テーブルに追加する
-	//OP code が Request でない→終了
-	if hdr.Operation != Operation_REQUEST {
-		return
-	}
-	//送信者欄とターゲット欄を交換し、自ホストのハードウェアアドレスとプ ロトコルアドレスを送信者欄に記入する
-	//OP code を Reply にする
-	//このパケットが送られてきたホストに対して、作成した ARP パケットを 送信する
 
-	//	dev.Send(link.ProtocolType_ARP, p.SenderHA, buf)
+	//指定のハードウェアを扱えない→終了
+	devs := link.Devices(enums.HardwareType(hdr.HardwareAddrFormat))
+	if devs == nil {
+		fmt.Printf("can't use %s\n", enums.HardwareType(hdr.HardwareAddrFormat).Name())
+		return
+	}
+
+	//指定のプロトコルを扱えない→終了
+	_, ok := link.Protocols()[enums.EtherType(hdr.ProtocolAddrFormat)]
+	if !ok {
+		fmt.Printf("can't use %s\n", enums.EtherType(hdr.ProtocolAddrFormat).Name())
+		return
+	}
+
+	//Marge_flag を false にする
+	margeFlag := false
+
+	//もし、プロトコルタイプと送信者プロトコルアドレスが既に ARP テーブ ルに含まれていたら、
+	_, ok = table.Get(
+		enums.EtherType(hdr.ProtocolAddrFormat), p.SenderPA,
+		enums.HardwareType(hdr.HardwareAddrFormat),
+	)
+	if ok {
+		//そのエントリのハードウェアアドレスを新しいアドレスに更新し、
+		fmt.Println("arp table updated")
+		table.Set(
+			enums.EtherType(hdr.ProtocolAddrFormat), p.SenderPA,
+			enums.HardwareType(hdr.HardwareAddrFormat), p.SenderHA,
+		)
+		//Marge_flag を true にする
+		margeFlag = true
+	}
+
+	//自分がターゲットプロトコルアドレスでない→終了
+	//var target HardwareAddr
+	for _, d := range link.Devices(enums.HardwareType(hdr.HardwareAddrFormat)) {
+		for _, v := range link.Interfaces(d) {
+			if bytes.Equal(v.ProtocolAddr().Entity(), p.TargetPA) {
+				goto DONE
+			}
+		}
+	}
+	fmt.Printf("protocol address %d is not mine.\n", p.TargetPA)
+	return
+DONE:
+
+	//もし、 Marge_flag が false なら、「プロトコル、送信者プロトコルア ドレス、送信者ハードウェアアドレス」を ARP テーブルに追加する
+	if !margeFlag {
+		fmt.Println("inserted new addr.")
+		table.Insert(
+			enums.EtherType(hdr.ProtocolAddrFormat), p.SenderPA,
+			enums.HardwareType(hdr.HardwareAddrFormat), p.SenderHA,
+		)
+	}
+	//OP code が Request でない→終了
+	if hdr.Operation != OperationRequest {
+		fmt.Println("operation is not request.")
+		return
+	}
+
+	/*
+		fmt.Println(p.SenderHA)
+		fmt.Println(p.SenderPA)
+		fmt.Println(p.TargetHA)
+		fmt.Println(p.TargetPA)
+	*/
+
+	//送信者欄とターゲット欄を交換し、自ホストのハードウェアアドレスとプロトコルアドレスを送信者欄に記入する
+	tmp := p.TargetPA
+	p.TargetHA = p.SenderHA
+	p.TargetPA = p.SenderPA
+	p.SenderHA = dev.Addr().Entity()
+	p.SenderPA = tmp
+
+	/*
+		fmt.Println(p.SenderHA)
+		fmt.Println(p.SenderPA)
+		fmt.Println(p.TargetHA)
+		fmt.Println(p.TargetPA)
+	*/
+	//OP code を Reply にする
+	hdr.Operation = OperationReplay
+
+	//このパケットが送られてきたホストに対し，作成したARPパケットを送信する
+	b, err := Write(hdr, p)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("<< arp tx ====================== >>")
+	fmt.Println(hex.Dump(b))
+	dev.Send(enums.EtherTypeARP, dev.BroadcastAddr(), b)
 }
+
+func Write(hdr *header, p *params) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	err := binary.Write(buf, binary.BigEndian, hdr)
+	if err != nil {
+		fmt.Println("binary.Write failed:", err)
+		return nil, err
+	}
+	err = binary.Write(buf, binary.BigEndian, p.SenderHA.Entity())
+	if err != nil {
+		fmt.Println("binary.Write failed:", err)
+		return nil, err
+	}
+	err = binary.Write(buf, binary.BigEndian, p.SenderPA.Entity())
+	if err != nil {
+		fmt.Println("binary.Write failed:", err)
+		return nil, err
+	}
+	err = binary.Write(buf, binary.BigEndian, p.TargetHA.Entity())
+	if err != nil {
+		fmt.Println("binary.Write failed:", err)
+		return nil, err
+	}
+	err = binary.Write(buf, binary.BigEndian, p.TargetPA.Entity())
+	if err != nil {
+		fmt.Println("binary.Write failed:", err)
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+//SendRequest()

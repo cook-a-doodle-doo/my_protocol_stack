@@ -13,16 +13,13 @@ type HardwareAddr interface {
 	Length() uint
 }
 
-type HardwareType uint
-
-//ハードウェアタイプをここに追記
-const (
-	HardwareTypeEthernet = iota
-	HardwareTypeLoopBack = iota
-)
+type ProtocolAddr interface {
+	Entity() []byte
+	Length() uint
+}
 
 type Device interface {
-	Type() HardwareType
+	Type() enums.HardwareType
 	Name() string
 	Addr() HardwareAddr
 	BroadcastAddr() HardwareAddr //Broadcast Address
@@ -33,24 +30,27 @@ type Device interface {
 	io.ReadWriteCloser
 }
 
-//リンク層の全デバイスがここに入る============================================
 var (
-	devices        map[string]Device                   = make(map[string]Device)
-	upperProtocols map[enums.EtherType]ProtocolHandler = make(map[enums.EtherType]ProtocolHandler)
+	//リンク層の全デバイスがここに入る============================================
+	devices map[enums.HardwareType][]Device = make(map[enums.HardwareType][]Device)
+	//プロトコルを登録
+	protocols map[enums.EtherType]ProtocolHandler = make(map[enums.EtherType]ProtocolHandler)
+	//デバイスにインターフェイスを登録
+	interfaces map[Device][]Interface = make(map[Device][]Interface)
 )
 
-func HaveHardware(d HardwareType) bool {
-	return true
+type Interface interface {
+	ProtocolAddr() ProtocolAddr
+	EtherType() enums.EtherType
 }
 
-func HaveProtocol(p enums.EtherType) bool {
-	_, ok := upperProtocols[p]
-	return ok
+func AppendInterface(d Device, i Interface) {
+	interfaces[d] = append(interfaces[d], i)
 }
 
 //登録した瞬間に動き始める====================================================
-//インターフェイスがないので細かい設定は出来ない
-func RegistDevice(d Device) error {
+func AppendDevice(d Device) {
+	devices[d.Type()] = append(devices[d.Type()], d)
 	go func() {
 		for {
 			buf := make([]byte, d.MTU()+d.HeaderSize())
@@ -61,7 +61,11 @@ func RegistDevice(d Device) error {
 			d.RxHandler(buf[:n], rxHandler)
 		}
 	}()
-	return nil
+}
+
+func Interfaces(d Device) []Interface {
+	i, _ := interfaces[d]
+	return i
 }
 
 type RxHandler func(Device, HardwareAddr, HardwareAddr, enums.EtherType, []byte)
@@ -72,19 +76,23 @@ func rxHandler(dev Device, dst, src HardwareAddr, upt enums.EtherType, payload [
 	fmt.Printf("src: %x:%x:%x:%x:%x:%x\n", s[0], s[1], s[2], s[3], s[4], s[5])
 	fmt.Printf("dst: %x:%x:%x:%x:%x:%x\n", d[0], d[1], d[2], d[3], d[4], d[5])
 	fmt.Printf("type:%s\n\n", upt.Name())
-	rx, ok := upperProtocols[upt]
+	rx, ok := protocols[upt]
 	if !ok {
 		fmt.Println("protocol", upt.Name(), "is not implmented!")
 	}
 	rx(dev, payload, dst, src)
 }
 
-func Devices() map[string]Device {
-	return devices
+func Devices(ht enums.HardwareType) []Device {
+	return devices[ht]
+}
+
+func Protocols() map[enums.EtherType]ProtocolHandler {
+	return protocols
 }
 
 func RegistProtocol(upt enums.EtherType, up ProtocolHandler) {
-	upperProtocols[upt] = up
+	protocols[upt] = up
 }
 
 //device, payload, dst, src
