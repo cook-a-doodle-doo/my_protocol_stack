@@ -44,11 +44,7 @@ type header struct {
 	EtherType   enums.EtherType
 }
 
-func NewDevice() (*Device, error) {
-	rd, err := raw.New(raw.TAP)
-	if err != nil {
-		return nil, err
-	}
+func NewDevice(rd raw.Device) (*Device, error) {
 	addr, err := rd.Addr()
 	if err != nil {
 		return nil, err
@@ -118,7 +114,7 @@ func (d *Device) RxHandler(flame []byte, f link.RxHandler) {
 	f(d, dst, src, hdr.EtherType, flame[HeaderSize:])
 }
 
-func (d *Device) Send(et enums.EtherType, hrd link.HardwareAddr, buf []byte) error {
+func (d *Device) Tx(et enums.EtherType, hrd link.HardwareAddr, buf []byte) error {
 	h := header{
 		EtherType: et,
 	}

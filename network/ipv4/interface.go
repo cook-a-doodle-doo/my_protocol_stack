@@ -3,16 +3,10 @@ package ipv4
 import "github.com/cook-a-doodle-do/my_protocol_stack/enums"
 import "github.com/cook-a-doodle-do/my_protocol_stack/network"
 
-type IPAddr []byte
-
-const (
-	IPAddrSize uint = 4
-)
-
 func (i IPAddr) Entity() []byte {
-	b := make([]byte, IPAddrSize)
-	copy(b, i[:])
-	return b
+	var b IPAddr
+	copy(b[:], i[:])
+	return b[:]
 }
 
 func (i IPAddr) Length() uint {
@@ -22,21 +16,21 @@ func (i IPAddr) Length() uint {
 type Interface struct {
 	IPAddr  IPAddr
 	NetMask IPAddr
+	device  *network.Device
 }
 
-func NewInterface() *Interface {
+func NewInterface(dev *network.Device) *Interface {
 	var i Interface
-	i.IPAddr = make([]byte, IPAddrSize)
-	i.NetMask = make([]byte, IPAddrSize)
+	i.device = dev
 	return &i
 }
 
 func (i *Interface) SetIPAddr(ip IPAddr) {
-	copy(i.IPAddr, ip)
+	copy(i.IPAddr[:], ip[:])
 }
 
 func (i *Interface) SetNetMask(mask IPAddr) {
-	copy(i.NetMask, mask)
+	copy(i.NetMask[:], mask[:])
 }
 
 func (i *Interface) ProtocolAddr() network.ProtocolAddr {
@@ -45,4 +39,9 @@ func (i *Interface) ProtocolAddr() network.ProtocolAddr {
 
 func (i *Interface) EtherType() enums.EtherType {
 	return enums.EtherTypeIPv4
+}
+
+func (i *Interface) Tx(pn network.ProtocolNum, data []byte, dst network.ProtocolAddr) error {
+	err := i.device.Tx(enums.EtherTypeIPv4, dst, data)
+	return err
 }

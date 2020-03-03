@@ -26,7 +26,7 @@ type Device interface {
 	MTU() uint                   //Maximum Transmission Unit
 	HeaderSize() uint
 	RxHandler([]byte, RxHandler)
-	Send(enums.EtherType, HardwareAddr, []byte) error
+	Tx(enums.EtherType, HardwareAddr, []byte) error
 	io.ReadWriteCloser
 }
 

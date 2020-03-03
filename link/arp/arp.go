@@ -89,7 +89,7 @@ func parseParams(payload []byte, hlen, plen uint8) (*params, error) {
 	return &p, nil
 }
 
-func RxHandler(dev link.Device, buf []byte, src, dst link.HardwareAddr) {
+func CallbackHandler(dev link.Device, buf []byte, src, dst link.HardwareAddr) {
 	fmt.Println("<< arp rx ====================== >>")
 	fmt.Println(hex.Dump(buf))
 	hdr, err := parseHeader(buf)
@@ -194,7 +194,7 @@ DONE:
 	}
 	fmt.Println("<< arp tx ====================== >>")
 	fmt.Println(hex.Dump(b))
-	dev.Send(enums.EtherTypeARP, dev.BroadcastAddr(), b)
+	dev.Tx(enums.EtherTypeARP, dev.BroadcastAddr(), b)
 }
 
 func Write(hdr *header, p *params) ([]byte, error) {

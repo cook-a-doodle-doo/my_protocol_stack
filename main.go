@@ -8,12 +8,18 @@ import (
 	"github.com/cook-a-doodle-do/my_protocol_stack/link/arp"
 	"github.com/cook-a-doodle-do/my_protocol_stack/link/ethernet"
 	"github.com/cook-a-doodle-do/my_protocol_stack/network"
+	"github.com/cook-a-doodle-do/my_protocol_stack/network/icmp"
 	"github.com/cook-a-doodle-do/my_protocol_stack/network/ipv4"
+	"github.com/cook-a-doodle-do/my_protocol_stack/raw"
 )
 
 func main() {
 	//ethernetデバイスを作る
-	linkdev, err := ethernet.NewDevice()
+	raw, err := raw.New(raw.TAP)
+	if err != nil {
+		panic(err)
+	}
+	linkdev, err := ethernet.NewDevice(raw)
 	if err != nil {
 		panic(err)
 	}
@@ -21,7 +27,7 @@ func main() {
 	link.AppendDevice(linkdev)
 
 	//リンク層にARPを登録
-	link.RegistProtocol(enums.EtherTypeARP, arp.RxHandler)
+	link.RegistProtocol(enums.EtherTypeARP, arp.CallbackHandler)
 	//ネットワーク層にIPv4を登録
 	network.RegistProtocol(enums.EtherTypeIPv4, ipv4.CallbackHandler)
 
@@ -32,39 +38,12 @@ func main() {
 	}
 
 	//IPインターフェイスを作製，アドレス追加
-	ipv4IF := ipv4.NewInterface()
-	ipv4IF.SetIPAddr([]byte{10, 0, 0, 2})
-	ipv4IF.SetNetMask([]byte{255, 255, 255, 255})
+	ipv4IF := ipv4.NewInterface(netdev)
+	ipv4IF.SetIPAddr([4]byte{10, 0, 0, 2})
+	ipv4IF.SetNetMask([4]byte{255, 255, 255, 255})
 
 	netdev.AppendInterface(ipv4IF)
+	ipv4.RegistProtocol(ipv4.ProtocolTypeICMP, icmp.CallbackHandler)
 
 	time.Sleep(3 * time.Minute)
 }
-
-//	raw, err := raw_device.New(raw_device.TAP)
-//	if err!= nil {
-//		return
-//	}
-
-//	tap, err := raw.New(raw.TAP)
-//	if err != nil {
-//		log.Fatalf(err.Error())
-//	}
-//	defer tap.Close()
-//	buf := make([]byte, 1500)
-//
-//	s, err := tap.Addr()
-//	if err != nil {
-//		fmt.Println("can't get mac addr")
-//	}
-//	fmt.Printf("%x:%x:%x:%x:%x:%x\n", s[0], s[1], s[2], s[3], s[4], s[5])
-//	fmt.Println("start tap0")
-/*
-	for i := 0; ; i++ {
-		//		bufio.NewScanner(os.Stdin).Scan()
-		//		time.Sleep(time.Second)
-		n, _ := tap.Read(buf)
-		fmt.Printf("\nupdate~~~~~~~~~~~~~~~~~~~~~~~~~~~~%d\n", i)
-		fmt.Println(hex.Dump(buf[:n]))
-	}
-*/

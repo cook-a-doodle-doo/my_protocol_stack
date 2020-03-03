@@ -14,11 +14,14 @@ type Device interface {
 	Addr() ([]byte, error)
 }
 
+type DeviceType int
+
 const (
-	TAP = iota
+	TAP DeviceType = iota
+	SOCK
 )
 
-func New(t int) (Device, error) {
+func New(t DeviceType) (Device, error) {
 	switch t {
 	case TAP:
 		raw, err := NewTapLinux("tap%d")
@@ -26,6 +29,12 @@ func New(t int) (Device, error) {
 			return nil, err
 		}
 		return raw, nil
+	case SOCK:
+		sock, err := NewSock("wlp7s0")
+		if err != nil {
+			return nil, err
+		}
+		return sock, nil
 	}
 	return nil, errors.New("unknown device type")
 }
