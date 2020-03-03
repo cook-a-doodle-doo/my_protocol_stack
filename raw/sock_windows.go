@@ -3,5 +3,5 @@ package raw
 import "fmt"
 
 func init() {
-	fmt.Println(s)
+	fmt.Println("hoge")
 }

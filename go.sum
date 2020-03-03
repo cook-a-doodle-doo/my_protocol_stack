@@ -1,2 +1,6 @@
 github.com/signalsciences/ipv4 v1.0.1 h1:y7H6wlLqvVRPUQST1Br/Htbr8MJleJ3q2e/5x4EQ74A=
 github.com/signalsciences/ipv4 v1.0.1/go.mod h1:GLCljS+eOHYQuNARmfJQRNY+ElqbRE9Ntj1yC7Wgiwg=
+github.com/songgao/water v0.0.0-20190725173103-fd331bda3f4b h1:+y4hCMc/WKsDbAPsOQZgBSaSZ26uh2afyaWeVg/3s/c=
+github.com/songgao/water v0.0.0-20190725173103-fd331bda3f4b/go.mod h1:P5HUIBuIWKbyjl083/loAegFkfbFNx5i2qEP4CNbm7E=
+golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527 h1:uYVVQ9WP/Ds2ROhcaGPeIdVq0RIXVLwsHlnvJ+cT1So=
+golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
