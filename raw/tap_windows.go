@@ -19,9 +19,13 @@ func main() {
 	}
 
 	for {
-
+		buf := make([]byte, 1500)
+		n, err := t.Read()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(buf[:n])
 	}
-	fmt.Println(t)
 }
 
 const (
