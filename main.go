@@ -15,7 +15,7 @@ import (
 
 func main() {
 	//ethernetデバイスを作る
-	raw, err := raw.New(raw.TAP)
+	raw, err := raw.New(raw.TAP, "tap01")
 	if err != nil {
 		panic(err)
 	}

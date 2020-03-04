@@ -4,7 +4,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
@@ -12,20 +11,6 @@ import (
 
 	"golang.org/x/sys/windows/registry"
 )
-
-func main() {
-	t, err := NewTap("tap%d")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	for {
-		buf := make([]byte, 1500)
-		n, err := t.Read(buf)
-		fmt.Println(err)
-		fmt.Println(hex.Dump(buf[:n]))
-	}
-}
 
 const (
 	tapDriverKey = `SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}`

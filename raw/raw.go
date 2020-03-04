@@ -21,16 +21,16 @@ const (
 	SOCK
 )
 
-func New(t DeviceType) (Device, error) {
+func New(t DeviceType, name string) (Device, error) {
 	switch t {
 	case TAP:
-		raw, err := NewTap("tap%d")
+		raw, err := NewTap(name)
 		if err != nil {
 			return nil, err
 		}
 		return raw, nil
 	case SOCK:
-		sock, err := NewSock("wlp7s0")
+		sock, err := NewSock(name)
 		if err != nil {
 			return nil, err
 		}
