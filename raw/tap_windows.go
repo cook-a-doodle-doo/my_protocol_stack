@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	t := NewTap("tap01")
+	t, err := NewTap("tap01")
 	fmt.Println(t)
 }
 
