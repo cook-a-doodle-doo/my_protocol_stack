@@ -21,6 +21,7 @@ type Tap struct {
 }
 
 //If you want to use raw package on windows You must installed tap-win32
+//And you shoud set an ip address to tap device from settings.
 func NewTap(name string) (*Tap, error) {
 	// find the device in registry.
 	deviceid, err := getdeviceid(
