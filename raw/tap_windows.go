@@ -178,7 +178,7 @@ func (s *Tap) Addr() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return (*[unsafe.Sizeof(ap)]byte)(unsafe.Pointer(ap))[:], nil
+	return (*[unsafe.Sizeof(unsafe.Point(0))]byte)(unsafe.Pointer(ap))[:], nil
 }
 
 func (s *Tap) Name() string {
