@@ -67,7 +67,7 @@ func NewTap(name string) (*Tap, error) {
 		uint32(syscall.FILE_SHARE_READ|syscall.FILE_SHARE_WRITE),
 		nil,
 		syscall.OPEN_EXISTING,
-		syscall.FILE_ATTRIBUTE_SYSTEM|syscall.FILE_FLAG_OVERLAPPED,
+		syscall.FILE_ATTRIBUTE_SYSTEM, //|syscall.FILE_FLAG_OVERLAPPED,
 		0)
 	// if err hanppens, close the interface.
 	defer func() {
