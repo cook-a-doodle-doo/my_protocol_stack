@@ -82,7 +82,6 @@ func NewTap(name string) (*Tap, error) {
 	}
 
 	// bring up device.
-	var bytesReturned uint32
 	rdbbuf := make([]byte, syscall.MAXIMUM_REPARSE_DATA_BUFFER_SIZE)
 	code := []byte{0x00, 0x00, 0x00, 0x00}
 	if status {
