@@ -102,8 +102,7 @@ func NewTap(name string) (*Tap, error) {
 
 	// bring up device.
 	rdbbuf := make([]byte, syscall.MAXIMUM_REPARSE_DATA_BUFFER_SIZE)
-	code := []byte{0x00, 0x00, 0x00, 0x00}
-	code[0] = 0x01
+	code := []byte{0x01, 0x00, 0x00, 0x00}
 
 	if err := syscall.DeviceIoControl(
 		file,
