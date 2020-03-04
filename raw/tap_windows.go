@@ -69,7 +69,8 @@ func NewTap(name string) (*Tap, error) {
 	mac := make([]byte, 6)
 	err = syscall.DeviceIoControl(
 		file,
-		tap_win_ioctl_get_mac,
+		//		tap_win_ioctl_get_mac,
+		uint32(0x00220004),
 		&mac[0],
 		uint32(len(mac)),
 		&mac[0],
@@ -89,7 +90,7 @@ func NewTap(name string) (*Tap, error) {
 	}
 	if err := syscall.DeviceIoControl(
 		file,
-		uint32((uint32(0x00000022)<<16)|(uint32(6)<<2)),
+		uint32(0x00220018),
 		&code[0],
 		uint32(4),
 		&rdbbuf[0],
