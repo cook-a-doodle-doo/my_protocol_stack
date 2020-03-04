@@ -21,6 +21,7 @@ func main() {
 	for {
 		buf := make([]byte, 1500)
 		n, err := t.Read(buf)
+		fmt.Println(err)
 		//		if err != nil {
 		//			fmt.Println("read error")
 		//			log.Fatal(err)
