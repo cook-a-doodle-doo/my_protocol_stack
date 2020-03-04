@@ -24,7 +24,7 @@ const (
 func New(t DeviceType) (Device, error) {
 	switch t {
 	case TAP:
-		raw, err := NewTapLinux("tap%d")
+		raw, err := NewTap("tap%d")
 		if err != nil {
 			return nil, err
 		}

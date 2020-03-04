@@ -102,7 +102,7 @@ func NewTap(name string) (*Tap, error) {
 	// find the name of tap interface(u need it to set the ip or other command)
 	ifces, err := net.Interfaces()
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	for _, v := range ifces {
@@ -167,4 +167,16 @@ func getdeviceid(componentID string, interfaceName string) (deviceid string, err
 	}
 
 	return "", fmt.Errorf("Failed to find the tap device in registry with specified ComponentId '%s', TAP driver may be not installed", componentID)
+}
+
+func (s *Tap) Read(buf []byte) (int, error) {
+	fmt.Println("Readed")
+	return 0, nil
+}
+func (s *Tap) Write(buf []byte) (int, error) {
+	fmt.Println("Write")
+	return 0, nil
+}
+func (s *Tap) Close() error {
+	return nil
 }

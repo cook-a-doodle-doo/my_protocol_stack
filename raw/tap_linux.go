@@ -27,7 +27,7 @@ type ifreq_flags struct {
 	pad   [0x28 - 0x10 - 2]byte
 }
 
-func NewTapLinux(name string) (*TapLinux, error) {
+func NewTap(name string) (*TapLinux, error) {
 	f, err := os.OpenFile(CLONE_DEVICE, os.O_RDWR, 0600)
 	if err != nil {
 		return nil, err
