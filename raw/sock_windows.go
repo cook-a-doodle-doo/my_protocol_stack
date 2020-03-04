@@ -21,3 +21,11 @@ func (s *Sock) Write(buf []byte) (int, error) {
 func (s *Sock) Close() error {
 	return nil
 }
+
+func (s *Sock) Addr() ([]byte, error) {
+	return []byte{10, 0, 0, 1}, nil
+}
+
+func (s *Sock) Name() string {
+	return s.name
+}
