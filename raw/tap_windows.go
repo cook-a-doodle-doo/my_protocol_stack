@@ -9,7 +9,6 @@ import (
 	"net"
 	"syscall"
 
-	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -183,13 +182,13 @@ func getdeviceid(componentID string, interfaceName string) (deviceid string, err
 }
 
 func (s *Tap) Read(buf []byte) (int, error) {
-	return windows.Read(s.fd, buf)
+	return syscall.Read(s.fd, buf)
 }
 
 func (s *Tap) Write(buf []byte) (int, error) {
-	return windows.Write(s.fd, buf)
+	return syscall.Write(s.fd, buf)
 }
 
 func (s *Tap) Close() error {
-	return windows.CloseHandle(s.fd)
+	return syscall.CloseHandle(s.fd)
 }
