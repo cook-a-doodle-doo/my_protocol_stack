@@ -13,6 +13,8 @@ import (
 )
 
 func main() {
+	t := NewTap("tap01")
+	fmt.Println(t)
 }
 
 const (
