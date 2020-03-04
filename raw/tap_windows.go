@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"syscall"
+	"unsafe"
 
 	"golang.org/x/sys/windows/registry"
 )
@@ -173,7 +174,11 @@ func (s *Tap) Close() error {
 }
 
 func (s *Tap) Addr() ([]byte, error) {
-	return syscall.GetProcAddress(s.fd, s.name)
+	ap, err := syscall.GetProcAddress(s.fd, s.name)
+	if err != nil {
+		return nil, err
+	}
+	return (*[unsafe.Sizeof(ap)]byte)(unsafe.Pointer(ap))[:], nil
 }
 
 func (s *Tap) Name() string {
