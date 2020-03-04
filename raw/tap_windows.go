@@ -173,7 +173,7 @@ func (s *Tap) Close() error {
 }
 
 func (s *Tap) Addr() ([]byte, error) {
-	return []byte{10, 0, 0, 1}, nil
+	return syscall.GetProcAddress(s.fd, s.name)
 }
 
 func (s *Tap) Name() string {
