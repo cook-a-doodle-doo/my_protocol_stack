@@ -20,7 +20,7 @@ func main() {
 
 	for {
 		buf := make([]byte, 1500)
-		n, err := t.Read()
+		n, err := t.Read(buf)
 		if err != nil {
 			log.Fatal(err)
 		}
