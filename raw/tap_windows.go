@@ -8,7 +8,6 @@ import (
 	"log"
 	"net"
 	"syscall"
-	"time"
 
 	"golang.org/x/sys/windows/registry"
 )
@@ -19,7 +18,6 @@ func main() {
 		fmt.Println(err)
 	}
 
-	time.Sleep(3 * time.Minute)
 	for {
 		buf := make([]byte, 1500)
 		n, err := t.Read(buf)
