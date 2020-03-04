@@ -3,6 +3,7 @@ package raw
 import "fmt"
 
 type Sock struct {
+	name string
 }
 
 func NewSock(name string) (*Sock, error) {
