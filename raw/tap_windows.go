@@ -6,7 +6,6 @@ import (
 	"log"
 	"net"
 	"syscall"
-	"unsafe"
 
 	"golang.org/x/sys/windows/registry"
 )
@@ -174,11 +173,21 @@ func (s *Tap) Close() error {
 }
 
 func (s *Tap) Addr() ([]byte, error) {
-	ap, err := syscall.GetProcAddress(s.fd, s.name)
+	mac := make([]byte, 6)
+	err = syscall.DeviceIoControl(
+		s.fd,
+		//		tap_win_ioctl_get_mac,
+		uint32(0x00220004),
+		&mac[0],
+		uint32(len(mac)),
+		&mac[0],
+		uint32(len(mac)),
+		&bytesReturned,
+		nil)
 	if err != nil {
 		return nil, err
 	}
-	return (*[unsafe.Sizeof(uintptr(0))]byte)(unsafe.Pointer(ap))[:], nil
+	return mac, nil
 }
 
 func (s *Tap) Name() string {
