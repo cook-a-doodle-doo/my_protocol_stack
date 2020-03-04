@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
@@ -22,11 +23,7 @@ func main() {
 		buf := make([]byte, 1500)
 		n, err := t.Read(buf)
 		fmt.Println(err)
-		//		if err != nil {
-		//			fmt.Println("read error")
-		//			log.Fatal(err)
-		//		}
-		fmt.Println(buf[:n])
+		fmt.Println(hex.Dump(buf[:n]))
 	}
 }
 
