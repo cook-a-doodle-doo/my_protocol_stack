@@ -88,7 +88,7 @@ func NewTap(name string) (*Tap, error) {
 		code[0] = 0x01
 	}
 	if err := syscall.DeviceIoControl(
-		fd,
+		file,
 		uint32((uint32(0x00000022)<<16)|(uint32(6)<<2)),
 		&code[0],
 		uint32(4),
@@ -98,7 +98,7 @@ func NewTap(name string) (*Tap, error) {
 		log.Fatal(err)
 	}
 
-	tap := &Tap{fd: fd}
+	tap := &Tap{fd: file}
 	// find the name of tap interface(u need it to set the ip or other command)
 	ifces, err := net.Interfaces()
 	if err != nil {
