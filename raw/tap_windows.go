@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"syscall"
@@ -16,6 +17,10 @@ func main() {
 	t, err := NewTap("tap01")
 	if err != nil {
 		fmt.Println(err)
+	}
+
+	for {
+
 	}
 	fmt.Println(t)
 }
@@ -32,7 +37,7 @@ const (
 //}
 
 type Tap struct {
-	fd   syscall.Handle
+	io.ReadWriteCloser
 	name string
 }
 
@@ -105,7 +110,7 @@ func NewTap(name string) (*Tap, error) {
 		log.Fatal(err)
 	}
 
-	tap := &Tap{fd: file}
+	tap := &Tap{io.ReadWriteCloser: file}
 	// find the name of tap interface(u need it to set the ip or other command)
 	ifces, err := net.Interfaces()
 	if err != nil {
@@ -177,14 +182,14 @@ func getdeviceid(componentID string, interfaceName string) (deviceid string, err
 	return "", fmt.Errorf("Failed to find the tap device in registry with specified ComponentId '%s', TAP driver may be not installed", componentID)
 }
 
-func (s *Tap) Read(buf []byte) (int, error) {
-	fmt.Println("Readed")
-	return 0, nil
-}
-func (s *Tap) Write(buf []byte) (int, error) {
-	fmt.Println("Write")
-	return 0, nil
-}
-func (s *Tap) Close() error {
-	return nil
-}
+//func (s *Tap) Read(buf []byte) (int, error) {
+//	fmt.Println("Readed")
+//	return 0, nil
+//}
+//func (s *Tap) Write(buf []byte) (int, error) {
+//	fmt.Println("Write")
+//	return 0, nil
+//}
+//func (s *Tap) Close() error {
+//	return nil
+//}
