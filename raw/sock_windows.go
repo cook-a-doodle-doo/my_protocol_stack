@@ -5,7 +5,7 @@ import "fmt"
 type Sock struct {
 }
 
-func NewSock() *Sock {
+func NewSock(name string) *Sock {
 	fmt.Println("New")
 	return &Sock{}
 }
