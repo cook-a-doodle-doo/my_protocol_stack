@@ -110,7 +110,7 @@ func NewTap(name string) (*Tap, error) {
 		log.Fatal(err)
 	}
 
-	tap := &Tap{io.ReadWriteCloser: file}
+	tap := &Tap{ReadWriteCloser: file}
 	// find the name of tap interface(u need it to set the ip or other command)
 	ifces, err := net.Interfaces()
 	if err != nil {
