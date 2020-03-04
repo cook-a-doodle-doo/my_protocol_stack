@@ -182,13 +182,13 @@ func getdeviceid(componentID string, interfaceName string) (deviceid string, err
 }
 
 func (s *Tap) Read(buf []byte) (int, error) {
-	return s.fd.Read(s.fd, buf)
+	return windows.Read(s.fd, buf)
 }
 
 func (s *Tap) Write(buf []byte) (int, error) {
-	return Write(s.fd, buf)
+	return windows.Write(s.fd, buf)
 }
 
 func (s *Tap) Close() error {
-	return CloseHandle(s.fd)
+	return windows.CloseHandle(s.fd)
 }
