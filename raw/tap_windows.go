@@ -58,17 +58,7 @@ func NewTap(name string) (*Tap, error) {
 	var bytesReturned uint32
 
 	// find the mac address of tap device, use this to find the name of interface
-	mac := make([]byte, 6)
-	err = syscall.DeviceIoControl(
-		file,
-		//		tap_win_ioctl_get_mac,
-		uint32(0x00220004),
-		&mac[0],
-		uint32(len(mac)),
-		&mac[0],
-		uint32(len(mac)),
-		&bytesReturned,
-		nil)
+	mac, err := (&Tap{fd: file}).Addr()
 	if err != nil {
 		return nil, err
 	}
@@ -173,6 +163,7 @@ func (s *Tap) Close() error {
 }
 
 func (s *Tap) Addr() ([]byte, error) {
+	var bytesReturned uint32
 	mac := make([]byte, 6)
 	err = syscall.DeviceIoControl(
 		s.fd,
