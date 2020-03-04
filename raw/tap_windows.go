@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	t, err := NewTap("tap01")
+	t, err := NewTap("tap%d")
 	if err != nil {
 		fmt.Println(err)
 	}
