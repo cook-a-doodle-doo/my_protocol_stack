@@ -165,7 +165,7 @@ func (s *Tap) Close() error {
 func (s *Tap) Addr() ([]byte, error) {
 	var bytesReturned uint32
 	mac := make([]byte, 6)
-	err = syscall.DeviceIoControl(
+	err := syscall.DeviceIoControl(
 		s.fd,
 		//		tap_win_ioctl_get_mac,
 		uint32(0x00220004),
