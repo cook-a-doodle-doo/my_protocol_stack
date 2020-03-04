@@ -5,9 +5,9 @@ import "fmt"
 type Sock struct {
 }
 
-func NewSock(name string) *Sock {
+func NewSock(name string) (*Sock, error) {
 	fmt.Println("New")
-	return &Sock{}
+	return &Sock{}, nil
 }
 
 func (s *Sock) Read(buf []byte) (int, error) {
