@@ -84,9 +84,8 @@ func NewTap(name string) (*Tap, error) {
 	// bring up device.
 	rdbbuf := make([]byte, syscall.MAXIMUM_REPARSE_DATA_BUFFER_SIZE)
 	code := []byte{0x00, 0x00, 0x00, 0x00}
-	if status {
-		code[0] = 0x01
-	}
+	code[0] = 0x01
+
 	if err := syscall.DeviceIoControl(
 		file,
 		uint32(0x00220018),
@@ -114,6 +113,7 @@ func NewTap(name string) (*Tap, error) {
 			return tap, nil
 		}
 	}
+	return nil, log.Errorf("can't found tap interface")
 }
 
 // getdeviceid finds out a TAP device from registry, it *may* requires privileged right to prevent some weird issue.
