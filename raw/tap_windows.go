@@ -8,13 +8,15 @@ import (
 	"log"
 	"net"
 	"syscall"
+
+	"golang.org/x/sys/windows/registry"
 )
 
 func main() {
 }
 
 const (
-	CLONE_DEVICE = "/dev/net/tun"
+	tapDriverKey = `SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11CE-BFC1-08002BE10318}`
 )
 
 //type ifreq_flags struct {
@@ -113,7 +115,7 @@ func NewTap(name string) (*Tap, error) {
 			return tap, nil
 		}
 	}
-	return nil, log.Errorf("can't found tap interface")
+	return nil, fmt.Errorf("can't found tap interface")
 }
 
 // getdeviceid finds out a TAP device from registry, it *may* requires privileged right to prevent some weird issue.
