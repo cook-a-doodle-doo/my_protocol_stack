@@ -175,3 +175,7 @@ func (s *Tap) Close() error {
 func (s *Tap) Addr() ([]byte, error) {
 	return []byte{10, 0, 0, 1}, nil
 }
+
+func (s *Tap) Name() string {
+	return s.name
+}
