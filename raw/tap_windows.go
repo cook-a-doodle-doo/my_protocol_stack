@@ -1,5 +1,3 @@
-// +build !linux
-
 package raw
 
 import (
@@ -17,17 +15,12 @@ const (
 	netConfigKey = `SYSTEM\CurrentControlSet\Control\Network\{4D36E972-E325-11CE-BFC1-08002BE10318}`
 )
 
-//type ifreq_flags struct {
-//	name  [syscall.IFNAMSIZ]byte
-//	flags uint16
-//	pad   [0x28 - 0x10 - 2]byte
-//}
-
 type Tap struct {
 	fd   syscall.Handle
 	name string
 }
 
+//If you want to use raw package on windows You must installed tap-win32
 func NewTap(name string) (*Tap, error) {
 	// find the device in registry.
 	deviceid, err := getdeviceid(
@@ -36,7 +29,6 @@ func NewTap(name string) (*Tap, error) {
 	if err != nil {
 		return nil, err
 	}
-	//string \\.\Global\deviceid.tap
 	path := "\\\\.\\Global\\" + deviceid + ".tap"
 	pathp, err := syscall.UTF16PtrFromString(path)
 	if err != nil {
@@ -178,4 +170,8 @@ func (s *Tap) Write(buf []byte) (int, error) {
 
 func (s *Tap) Close() error {
 	return syscall.CloseHandle(s.fd)
+}
+
+func (s *Tap) Addr() ([]byte, error) {
+	return []byte{10, 0, 0, 1}, nil
 }
